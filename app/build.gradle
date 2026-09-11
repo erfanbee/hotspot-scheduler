@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace 'com.iranjan.hotspotscheduler'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.iranjan.hotspotscheduler"
