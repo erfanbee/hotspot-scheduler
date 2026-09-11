@@ -49,7 +49,7 @@ object NodeMatcher {
         for (editor in editors) {
             var score = 0
             val own = listOfNotNull(
-                editor.hint?.toString(),
+                editor.hintText?.toString(),
                 editor.text?.toString(),
                 editor.contentDescription?.toString(),
                 editor.viewIdResourceName
