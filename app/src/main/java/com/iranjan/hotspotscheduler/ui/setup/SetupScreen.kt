@@ -43,10 +43,14 @@ fun SetupScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    var diagnostics by remember { mutableStateOf(com.iranjan.hotspotscheduler.accessibility.AttemptLog.snapshot()) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+                diagnostics = com.iranjan.hotspotscheduler.accessibility.AttemptLog.snapshot()
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -145,6 +149,23 @@ fun SetupScreen(
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.setup_sleep_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.setup_sleep_desc), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.setup_diag_title), style = MaterialTheme.typography.titleMedium)
+                if (diagnostics.isEmpty()) {
+                    Text(stringResource(R.string.setup_diag_empty), style = MaterialTheme.typography.bodySmall)
+                } else {
+                    diagnostics.takeLast(25).forEach { line ->
+                        Text(
+                            line,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
             }
         }
 

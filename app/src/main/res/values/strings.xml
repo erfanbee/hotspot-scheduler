@@ -47,6 +47,8 @@
     <string name="setup_calibrate_title">Calibrate the hotspot switch</string>
     <string name="setup_calibrate_desc">One-time step. Opens the Mobile Hotspot settings screen and captures every control on it so you can confirm which switch is the hotspot toggle. Do this once per One UI update.</string>
     <string name="setup_calibrate_open">Open calibration</string>
+    <string name="setup_diag_title">Diagnostics — last automation attempts</string>
+    <string name="setup_diag_empty">No automation attempts recorded yet.</string>
 
     <string name="calib_title">Calibration</string>
     <string name="calib_mode_on">Scanning ON — open Settings → Connections → Mobile Hotspot and Tethering now.</string>
