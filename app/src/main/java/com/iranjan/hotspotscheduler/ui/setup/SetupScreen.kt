@@ -50,6 +50,7 @@ fun SetupScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val testRunning by viewModel.testRunning.collectAsState()
+    val shizukuStatus by viewModel.shizuku.collectAsState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var diagnostics by remember { mutableStateOf(com.iranjan.hotspotscheduler.accessibility.AttemptLog.snapshot()) }
@@ -92,6 +93,52 @@ fun SetupScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(stringResource(R.string.setup_title), style = MaterialTheme.typography.headlineSmall)
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.shizuku_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            val statusText = when {
+                                shizukuStatus.granted -> stringResource(R.string.shizuku_status_ready)
+                                shizukuStatus.running -> stringResource(R.string.shizuku_status_running)
+                                shizukuStatus.installed -> stringResource(R.string.shizuku_status_stopped)
+                                else -> stringResource(R.string.shizuku_status_missing)
+                            }
+                            Text(
+                                statusText,
+                                color = if (shizukuStatus.granted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            )
+                        }
+                    )
+                }
+                Text(stringResource(R.string.shizuku_desc), style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!shizukuStatus.installed) {
+                        Button(onClick = {
+                            val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=moe.shizuku.privileged.api"))
+                            try {
+                                context.startActivity(market)
+                            } catch (t: Throwable) {
+                                open(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api")))
+                            }
+                        }) {
+                            Text(stringResource(R.string.shizuku_install))
+                        }
+                    }
+                    if (shizukuStatus.running && !shizukuStatus.granted) {
+                        Button(onClick = { viewModel.requestShizukuPermission() }) {
+                            Text(stringResource(R.string.shizuku_grant))
+                        }
+                    }
+                    OutlinedButton(onClick = { viewModel.refresh() }) {
+                        Text(stringResource(R.string.shizuku_check))
+                    }
+                }
+            }
+        }
 
         SetupCard(
             title = stringResource(R.string.setup_accessibility_title),

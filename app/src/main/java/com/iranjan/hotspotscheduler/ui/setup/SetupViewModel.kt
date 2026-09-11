@@ -15,9 +15,11 @@ import androidx.lifecycle.viewModelScope
 import com.iranjan.hotspotscheduler.accessibility.AttemptLog
 import com.iranjan.hotspotscheduler.accessibility.HotspotController
 import com.iranjan.hotspotscheduler.data.repo.RoutineRepository
+import com.iranjan.hotspotscheduler.toggle.ShizukuEngine
 import com.iranjan.hotspotscheduler.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.rikka.shizuku.Shizuku
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -32,11 +34,18 @@ data class SetupState(
     val overlay: Boolean = false
 )
 
+data class ShizukuStatus(
+    val installed: Boolean,
+    val running: Boolean,
+    val granted: Boolean
+)
+
 @HiltViewModel
 class SetupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val controller: HotspotController,
-    private val repo: RoutineRepository
+    private val repo: RoutineRepository,
+    private val shizuku: ShizukuEngine
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SetupState())
@@ -44,6 +53,48 @@ class SetupViewModel @Inject constructor(
 
     private val _testRunning = MutableStateFlow(false)
     val testRunning: StateFlow<Boolean> = _testRunning
+
+    private val _shizuku = MutableStateFlow(ShizukuStatus(false, false, false))
+    val shizuku: StateFlow<ShizukuStatus> = _shizuku
+
+    private val permissionListener =
+        Shizuku.OnRequestPermissionResultListener { _, grantResult ->
+            _shizuku.value = shizukuStatus()
+            refresh()
+        }
+
+    init {
+        try {
+            Shizuku.addRequestPermissionResultListener(permissionListener)
+        } catch (t: Throwable) {
+        }
+        refresh()
+    }
+
+    override fun onCleared() {
+        try {
+            Shizuku.removeRequestPermissionResultListener(permissionListener)
+        } catch (t: Throwable) {
+        }
+    }
+
+    private fun shizukuStatus(): ShizukuStatus = ShizukuStatus(
+        installed = isShizukuInstalled(),
+        running = shizuku.isRunning(),
+        granted = shizuku.hasPermission()
+    )
+
+    private fun isShizukuInstalled(): Boolean = try {
+        context.packageManager.getPackageInfo("moe.shizuku.privileged.api", 0) != null
+    } catch (t: Throwable) {
+        false
+    }
+
+    fun requestShizukuPermission() = try {
+        Shizuku.requestPermission(1001)
+    } catch (t: Throwable) {
+        AttemptLog.add("shizuku permission request failed: ${t.message}")
+    }
 
     fun refresh() {
         val alarmManager = context.getSystemService(AlarmManager::class.java)
@@ -55,6 +106,7 @@ class SetupViewModel @Inject constructor(
             battery = isIgnoringBattery(),
             overlay = Settings.canDrawOverlays(context)
         )
+        _shizuku.value = shizukuStatus()
     }
 
     fun testHotspot(on: Boolean) = viewModelScope.launch {

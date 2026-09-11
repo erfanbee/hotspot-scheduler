@@ -57,6 +57,15 @@
     <string name="test_data_off">Data OFF</string>
     <string name="test_running">Running — watch the screen, results appear below…</string>
     <string name="diag_share">Share diagnostics</string>
+    <string name="shizuku_title">Background engine (Shizuku)</string>
+    <string name="shizuku_desc">Strongly recommended. With Shizuku the app toggles hotspot and mobile data instantly in the background — no Settings screen, works while locked. One-time setup: 1) install Shizuku, 2) open Shizuku → follow the Wireless debugging pairing steps, 3) return here and tap Grant. Until Shizuku is ready, the app uses the accessibility engine (needs the screen on).</string>
+    <string name="shizuku_status_ready">Ready</string>
+    <string name="shizuku_status_running">Running — grant needed</string>
+    <string name="shizuku_status_stopped">Installed — not running</string>
+    <string name="shizuku_status_missing">Not installed</string>
+    <string name="shizuku_install">Install Shizuku</string>
+    <string name="shizuku_grant">Grant permission</string>
+    <string name="shizuku_check">Check again</string>
 
     <string name="calib_title">Calibration</string>
     <string name="calib_mode_on">Scanning ON — open Settings → Connections → Mobile Hotspot and Tethering now.</string>

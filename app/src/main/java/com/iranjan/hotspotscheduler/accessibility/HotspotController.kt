@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.iranjan.hotspotscheduler.data.prefs.AutomationPrefs
 import com.iranjan.hotspotscheduler.service.NotificationHelper
+import com.iranjan.hotspotscheduler.toggle.ShizukuEngine
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -30,14 +31,17 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: AutomationPrefs,
     private val notifications: NotificationHelper,
-    private val navigator: HotspotNavigator
+    private val navigator: HotspotNavigator,
+    private val shizuku: ShizukuEngine
 ) : HotspotController {
 
     private val powerManager: PowerManager? = context.getSystemService(PowerManager::class.java)
     private val keyguardManager: KeyguardManager? = context.getSystemService(KeyguardManager::class.java)
     private var keyguardLock: KeyguardManager.KeyguardLock? = null
 
-    override suspend fun readHotspotState(): Boolean? {
+    override suspend fun readHotspotState(): Boolean? = accessibilityReadHotspotState()
+
+    private suspend fun accessibilityReadHotspotState(): Boolean? {
         val service = AccessibilityServiceHolder.service ?: return null
         val calibration = prefs.calibration()
         return withContext(Dispatchers.Main) {
@@ -49,6 +53,23 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
     }
 
     override suspend fun setHotspotState(targetOn: Boolean, password: String?): ToggleResult {
+        if (shizuku.isReady()) {
+            val supported = shizuku.hotspotCommandSupported()
+            AttemptLog.add("engine=shizuku hotspot target=$targetOn commandSupported=$supported")
+            if (supported) {
+                val ok = shizuku.setHotspot(targetOn, password)
+                if (ok) {
+                    prefs.setLastKnownHotspotOn(targetOn)
+                    AttemptLog.add("HOTSPOT target=$targetOn -> TOGGLED (shizuku, background)")
+                    return ToggleResult.TOGGLED
+                }
+                AttemptLog.add("shizuku hotspot failed; falling back to accessibility")
+            } else {
+                AttemptLog.add("shizuku start-softap not supported; falling back to accessibility")
+            }
+        } else {
+            AttemptLog.add("engine=accessibility (shizuku not ready)")
+        }
         val result = withTimeoutOrNull(TOTAL_TIMEOUT_MS) {
             runToggle(KEYWORD_HOTSPOT, targetOn, useCalibration = true, password = password)
         } ?: ToggleResult.FAILED
@@ -62,6 +83,14 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
     }
 
     override suspend fun setMobileData(targetOn: Boolean): ToggleResult {
+        if (shizuku.isReady()) {
+            val ok = shizuku.mobileData(targetOn)
+            AttemptLog.add("MOBILE DATA target=$targetOn -> ${if (ok) "TOGGLED" else "FAILED"} (shizuku)")
+            if (ok) return ToggleResult.TOGGLED
+            AttemptLog.add("shizuku mobile data failed; falling back to accessibility")
+        } else {
+            AttemptLog.add("engine=accessibility (shizuku not ready)")
+        }
         val result = withTimeoutOrNull(TOTAL_TIMEOUT_MS) {
             runToggle(KEYWORD_MOBILE_DATA, targetOn, useCalibration = false, password = null)
         } ?: ToggleResult.FAILED

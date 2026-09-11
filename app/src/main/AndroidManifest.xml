@@ -18,6 +18,7 @@
     <queries>
         <package android:name="com.android.settings" />
         <package android:name="com.samsung.android.settings" />
+        <package android:name="moe.shizuku.privileged.api" />
     </queries>
 
     <application
@@ -72,6 +73,14 @@
         <receiver
             android:name=".service.ActionReceiver"
             android:exported="false" />
+
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <receiver
             android:name=".service.WidgetProvider"
