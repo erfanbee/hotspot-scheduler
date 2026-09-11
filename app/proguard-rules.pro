@@ -1,0 +1,2 @@
+-keep class com.iranjan.hotspotscheduler.accessibility.** { *; }
+-keepclassmembers class android.view.accessibility.AccessibilityNodeInfo { *; }

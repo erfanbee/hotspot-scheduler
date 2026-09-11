@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hotspot Scheduler</string>
+    <string name="acc_service_label">Hotspot Scheduler Automation</string>
+    <string name="acc_service_description">Monitors the Samsung Settings screen so Hotspot Scheduler can turn the Mobile Hotspot on and off on your behalf. It reads and clicks the hotspot switch in Settings and nothing else.</string>
+
+    <string name="channel_status_name">Automation status</string>
+    <string name="channel_status_desc">Persistent status of hotspot automation.</string>
+    <string name="channel_alerts_name">Alerts</string>
+    <string name="channel_alerts_desc">Data cap reached, toggle failures, accessibility service health.</string>
+
+    <string name="notif_status_title">Hotspot automation active</string>
+    <string name="notif_status_paused">Paused for today</string>
+    <string name="notif_status_disabled">Automation disabled</string>
+    <string name="notif_action_pause_today">Pause for today</string>
+    <string name="notif_action_turn_off">Turn off now</string>
+    <string name="notif_cap_title">Hotspot data cap reached</string>
+    <string name="notif_cap_text">Used %1$s of your %2$s cap. Hotspot turned off until tomorrow.</string>
+    <string name="notif_cap_fail_text">Used %1$s of your %2$s cap, but the hotspot could not be turned off automatically. Please turn it off manually.</string>
+    <string name="notif_toggle_fail_title">Hotspot toggle failed</string>
+    <string name="notif_toggle_fail_text">Couldn\'t toggle hotspot automatically — please toggle manually.</string>
+    <string name="notif_acc_disabled_title">Accessibility service is off</string>
+    <string name="notif_acc_disabled_text">Hotspot automation cannot work until you re-enable the accessibility service.</string>
+    <string name="notif_acc_disabled_action">Re-enable</string>
+    <string name="notif_open_settings_title">Action needed</string>
+    <string name="notif_open_settings_text">Tap to open the Mobile Hotspot settings screen. The app will toggle the switch once it appears.</string>
+
+    <string name="setup_title">Setup</string>
+    <string name="setup_accessibility_title">Accessibility Service</string>
+    <string name="setup_accessibility_desc">Required. Lets the app see and press the hotspot switch inside the Samsung Settings app. One UI path: Settings → Accessibility → Installed apps → Hotspot Scheduler → turn On.</string>
+    <string name="setup_usage_title">Usage Access</string>
+    <string name="setup_usage_desc">Required for data caps. Lets the app read how much tethering data was used today. One UI path: Settings → Apps → ⋮ (More) → Special access → Usage access → Hotspot Scheduler → Allow.</string>
+    <string name="setup_notifications_title">Notifications</string>
+    <string name="setup_notifications_desc">Shows the persistent status and alerts. Required on Android 13. Tap Allow in the system dialog.</string>
+    <string name="setup_exact_title">Alarms and reminders</string>
+    <string name="setup_exact_desc">Required so routine start/end times fire exactly, even in Doze. One UI path: Settings → Apps → Hotspot Scheduler → Alarms and reminders → Allow.</string>
+    <string name="setup_battery_title">Remove battery restrictions</string>
+    <string name="setup_battery_desc">Prevents One UI from killing the automation. 1) Tap below to ignore battery optimizations. 2) Settings → Battery and device care → Battery → Background usage limits → Never sleeping apps → add Hotspot Scheduler. Also check Deep sleeping apps and make sure Hotspot Scheduler is NOT listed there.</string>
+    <string name="setup_battery_action">Ignore battery optimizations</string>
+    <string name="setup_overlay_title">Display over other apps</string>
+    <string name="setup_overlay_desc">Strongly recommended. Lets the app open the hotspot Settings screen by itself in the background. Without it you will get a notification to tap each time a toggle is needed. One UI path: Settings → Apps → Hotspot Scheduler → Appear on top → Allow.</string>
+    <string name="setup_sleep_title">One UI app sleeping</string>
+    <string name="setup_sleep_desc">One UI path: Settings → Battery and device care → Battery → Background usage limits → Put unused apps to sleep → make sure the toggle is Off, or add Hotspot Scheduler to Never sleeping apps. This is the most common reason automation silently stops after a day or two.</string>
+    <string name="setup_open">Open</string>
+    <string name="setup_granted">Granted</string>
+    <string name="setup_missing">Not set</string>
+    <string name="setup_calibrate_title">Calibrate the hotspot switch</string>
+    <string name="setup_calibrate_desc">One-time step. Opens the Mobile Hotspot settings screen and captures every control on it so you can confirm which switch is the hotspot toggle. Do this once per One UI update.</string>
+    <string name="setup_calibrate_open">Open calibration</string>
+
+    <string name="calib_title">Calibration</string>
+    <string name="calib_mode_on">Scanning ON — open Settings → Connections → Mobile Hotspot and Tethering now.</string>
+    <string name="calib_mode_off">Scanning off.</string>
+    <string name="calib_start">Start calibration</string>
+    <string name="calib_stop">Stop scanning</string>
+    <string name="calib_rescan">Rescan current screen</string>
+    <string name="calib_clear">Clear saved calibration</string>
+    <string name="calib_saved">Saved calibration</string>
+    <string name="calib_none_saved">No saved calibration. Matching order: switch_widget id → any Switch class → Hotspot text proximity.</string>
+    <string name="calib_current">Saved: %1$s</string>
+    <string name="calib_tap_hint">Tap the row that is the hotspot toggle (usually android.widget.Switch with id com.android.settings:id/switch_widget).</string>
+    <string name="calib_confirm_title">Use this node as the hotspot toggle?</string>
+    <string name="calib_empty">No nodes captured yet. Tap Start calibration, or open the hotspot settings screen and tap Rescan.</string>
+
+    <string name="routines_title">Routines</string>
+    <string name="master_switch">Automation</string>
+    <string name="no_routines">No routines yet. Tap + to create one.</string>
+    <string name="overlap_warning">Overlapping routines: %1$s</string>
+    <string name="cap_chip">Cap %1$s</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="export">Export routines</string>
+    <string name="import_routines">Import routines</string>
+    <string name="exported_toast">Routines exported</string>
+    <string name="imported_toast">Imported %1$d routine(s)</string>
+    <string name="import_failed_toast">Import failed: invalid file</string>
+
+    <string name="editor_new">New routine</string>
+    <string name="editor_edit">Edit routine</string>
+    <string name="editor_name">Name</string>
+    <string name="editor_start">Start</string>
+    <string name="editor_end">End</string>
+    <string name="editor_cap">Data cap (optional)</string>
+    <string name="editor_cap_hint">e.g. 2.0</string>
+    <string name="editor_enabled">Routine enabled</string>
+    <string name="editor_overlap_warning">This routine overlaps with: %1$s</string>
+    <string name="editor_days">Days</string>
+
+    <string name="usage_title">Usage</string>
+    <string name="usage_today">Today: %1$s</string>
+    <string name="usage_no_data">No usage recorded yet. Polling starts when the automation service runs.</string>
+    <string name="usage_days_7">Last 7 days</string>
+    <string name="usage_source">Source: %1$s</string>
+
+    <string name="widget_off">Hotspot: off</string>
+    <string name="widget_on">Hotspot: on</string>
+    <string name="widget_unknown">Hotspot: ?</string>
+
+    <string name="day_mon">Mon</string>
+    <string name="day_tue">Tue</string>
+    <string name="day_wed">Wed</string>
+    <string name="day_thu">Thu</string>
+    <string name="day_fri">Fri</string>
+    <string name="day_sat">Sat</string>
+    <string name="day_sun">Sun</string>
+    <string name="unit_mb">MB</string>
+    <string name="unit_gb">GB</string>
+    <string name="unlimited">No cap</string>
+    <string name="pause_active">Paused today</string>
+    <string name="suppressed_active">Suppressed until next window</string>
+    <string name="cap_hit_active">Cap reached today</string>
+    <string name="acc_ok">Accessibility OK</string>
+    <string name="acc_bad">Accessibility OFF</string>
+</resources>
