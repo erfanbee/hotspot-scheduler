@@ -1,6 +1,7 @@
 package com.iranjan.hotspotscheduler.data.model
 
 import com.iranjan.hotspotscheduler.data.db.RoutineEntity
+import com.iranjan.hotspotscheduler.util.PasswordCrypto
 
 data class Routine(
     val id: Long,
@@ -23,7 +24,7 @@ fun RoutineEntity.toDomain(): Routine = Routine(
     capMb = capMb,
     enabled = enabled,
     mobileData = mobileData,
-    hotspotPassword = hotspotPassword
+    hotspotPassword = PasswordCrypto.decrypt(hotspotPassword)
 )
 
 fun Routine.toEntity(createdAt: Long): RoutineEntity = RoutineEntity(
@@ -35,6 +36,6 @@ fun Routine.toEntity(createdAt: Long): RoutineEntity = RoutineEntity(
     capMb = capMb,
     enabled = enabled,
     mobileData = mobileData,
-    hotspotPassword = hotspotPassword,
+    hotspotPassword = PasswordCrypto.encrypt(hotspotPassword ?: "").ifBlank { null },
     createdAt = createdAt
 )

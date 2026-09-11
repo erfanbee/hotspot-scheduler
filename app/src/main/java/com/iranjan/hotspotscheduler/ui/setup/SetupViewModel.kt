@@ -1,5 +1,6 @@
 package com.iranjan.hotspotscheduler.ui.setup
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.AppOpsManager
 import android.content.Context
@@ -10,12 +11,15 @@ import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.iranjan.hotspotscheduler.accessibility.AttemptLog
+import com.iranjan.hotspotscheduler.accessibility.HotspotController
 import com.iranjan.hotspotscheduler.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import android.Manifest
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SetupState(
@@ -29,11 +33,15 @@ data class SetupState(
 
 @HiltViewModel
 class SetupViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val controller: HotspotController
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SetupState())
     val state: StateFlow<SetupState> = _state
+
+    private val _testRunning = MutableStateFlow(false)
+    val testRunning: StateFlow<Boolean> = _testRunning
 
     fun refresh() {
         val alarmManager = context.getSystemService(AlarmManager::class.java)
@@ -46,6 +54,26 @@ class SetupViewModel @Inject constructor(
             overlay = Settings.canDrawOverlays(context)
         )
     }
+
+    fun testHotspot(on: Boolean) = viewModelScope.launch {
+        _testRunning.value = true
+        try {
+            controller.setHotspotState(on)
+        } finally {
+            _testRunning.value = false
+        }
+    }
+
+    fun testMobileData(on: Boolean) = viewModelScope.launch {
+        _testRunning.value = true
+        try {
+            controller.setMobileData(on)
+        } finally {
+            _testRunning.value = false
+        }
+    }
+
+    fun shareText(): String = AttemptLog.snapshot().joinToString("\n")
 
     private fun hasUsageAccess(): Boolean {
         return try {

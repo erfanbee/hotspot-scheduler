@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,9 +48,18 @@ fun SetupScreen(
     viewModel: SetupViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val testRunning by viewModel.testRunning.collectAsState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var diagnostics by remember { mutableStateOf(com.iranjan.hotspotscheduler.accessibility.AttemptLog.snapshot()) }
+
+    LaunchedEffect(testRunning) {
+        while (testRunning) {
+            diagnostics = com.iranjan.hotspotscheduler.accessibility.AttemptLog.snapshot()
+            kotlinx.coroutines.delay(1000)
+        }
+        diagnostics = com.iranjan.hotspotscheduler.accessibility.AttemptLog.snapshot()
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -155,6 +165,43 @@ fun SetupScreen(
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.setup_sleep_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.setup_sleep_desc), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.test_section_title), style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { viewModel.testHotspot(true) }, enabled = !testRunning, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.test_hotspot_on))
+                    }
+                    Button(onClick = { viewModel.testHotspot(false) }, enabled = !testRunning, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.test_hotspot_off))
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { viewModel.testMobileData(true) }, enabled = !testRunning, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.test_data_on))
+                    }
+                    Button(onClick = { viewModel.testMobileData(false) }, enabled = !testRunning, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.test_data_off))
+                    }
+                }
+                if (testRunning) {
+                    Text(stringResource(R.string.test_running), style = MaterialTheme.typography.bodySmall)
+                }
+                OutlinedButton(onClick = {
+                    val share = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, viewModel.shareText())
+                    }
+                    try {
+                        context.startActivity(Intent.createChooser(share, null))
+                    } catch (t: Throwable) {
+                    }
+                }) {
+                    Text(stringResource(R.string.diag_share))
+                }
             }
         }
 
