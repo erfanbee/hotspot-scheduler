@@ -1,10 +1,20 @@
 package com.iranjan.hotspotscheduler.toggle
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
 import com.iranjan.hotspotscheduler.accessibility.AttemptLog
 import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuUserServiceArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +23,22 @@ data class ShellResult(val exitCode: Int, val output: String) {
 }
 
 @Singleton
-class ShizukuEngine @Inject constructor() {
+class ShizukuEngine @Inject constructor(@ApplicationContext private val context: Context) {
+
+    private var shellService: IShellService? = null
+    private val bindLatch = CountDownLatch(1)
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            shellService = binder?.let { IShellService.Stub.asInterface(it) }
+            AttemptLog.add("shizuku shell service connected=${shellService != null}")
+            bindLatch.countDown()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            shellService = null
+        }
+    }
 
     fun isRunning(): Boolean = try {
         Shizuku.pingBinder()
@@ -29,11 +54,33 @@ class ShizukuEngine @Inject constructor() {
 
     fun isReady(): Boolean = hasPermission()
 
+    private fun bindService() {
+        val args = ShizukuUserServiceArgs(ComponentName(context, ShellService::class.java))
+            .processNameSuffix("shell")
+            .version(1)
+            .debuggable(false)
+        Shizuku.bindUserService(args, connection)
+    }
+
+    private fun awaitService(): IShellService? {
+        if (shellService != null) return shellService
+        return try {
+            bindService()
+            bindLatch.await(10, TimeUnit.SECONDS)
+            shellService
+        } catch (t: Throwable) {
+            AttemptLog.add("shizuku bind failed: ${t.message}")
+            null
+        }
+    }
+
     suspend fun exec(command: String): ShellResult = withContext(Dispatchers.IO) {
+        val service = awaitService() ?: return@withContext ShellResult(-1, "service not bound")
         try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
-            val output = process.inputStream.bufferedReader().readText()
-            val code = process.waitFor()
+            val raw = service.runCommand(command)
+            val code = raw.lineSequence().firstOrNull { it.startsWith("EXIT:") }
+                ?.removePrefix("EXIT:")?.toIntOrNull() ?: -1
+            val output = raw.lineSequence().drop(1).joinToString("\n")
             ShellResult(code, output)
         } catch (t: Throwable) {
             AttemptLog.add("shizuku exec failed: ${t.message}")
@@ -42,8 +89,7 @@ class ShizukuEngine @Inject constructor() {
     }
 
     suspend fun mobileData(on: Boolean): Boolean {
-        val result = exec("svc data " + if (on) "enable" else "disable")
-        return result.success
+        return exec("svc data " + if (on) "enable" else "disable").success
     }
 
     suspend fun mobileDataState(): Boolean? {
@@ -80,8 +126,7 @@ class ShizukuEngine @Inject constructor() {
             }
             false
         } else {
-            val result = exec("cmd wifi stop-softap ap0")
-            if (result.success) {
+            if (exec("cmd wifi stop-softap ap0").success) {
                 true
             } else {
                 exec("cmd wifi stop-softap").success
