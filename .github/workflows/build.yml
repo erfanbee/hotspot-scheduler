@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,8 +26,24 @@ jobs:
         with:
           gradle-version: '8.1.1'
 
+      - name: Show versions
+        run: gradle --version
+
       - name: Build debug APK
-        run: gradle assembleDebug --no-daemon
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee gradle-output.txt
+
+      - name: Save failure log to branch
+        if: failure()
+        run: |
+          git config user.name "build-bot"
+          git config user.email "build-bot@users.noreply.github.com"
+          git checkout --detach
+          tail -c 300000 gradle-output.txt > failure-log.txt
+          git add failure-log.txt
+          git commit -m "failure log for run ${GITHUB_RUN_ID}"
+          git push origin HEAD:failure-logs --force
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
