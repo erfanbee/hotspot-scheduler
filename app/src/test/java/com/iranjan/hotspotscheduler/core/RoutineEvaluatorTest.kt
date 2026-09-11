@@ -1,4 +1,4 @@
-package com.iranjan.hotspotscheduler.core
+﻿package com.iranjan.hotspotscheduler.core
 
 import com.iranjan.hotspotscheduler.data.model.Routine
 import java.time.LocalDate
@@ -53,28 +53,28 @@ class RoutineEvaluatorTest {
     @Test
     fun `active inside window`() {
         val routines = listOf(routine(setOf(1, 2, 3, 4, 5), 8 * 60, 9 * 60 + 30))
-        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "08:30")).isNotEmpty())
-        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "08:00")).isNotEmpty())
+        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "08:30"), zone).isNotEmpty())
+        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "08:00"), zone).isNotEmpty())
     }
 
     @Test
     fun `not active outside window`() {
         val routines = listOf(routine(setOf(1, 2, 3, 4, 5), 8 * 60, 9 * 60 + 30))
-        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "10:00")).isEmpty())
-        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "07:59")).isEmpty())
+        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "10:00"), zone).isEmpty())
+        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-07", "07:59"), zone).isEmpty())
     }
 
     @Test
     fun `overnight routine is active after midnight`() {
         val routines = listOf(routine(setOf(1), 22 * 60, 2 * 60))
-        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-08", "01:00")).isNotEmpty())
-        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-08", "02:01")).isEmpty())
+        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-08", "01:00"), zone).isNotEmpty())
+        assertTrue(RoutineEvaluator.activeRoutines(routines, at("2026-09-08", "02:01"), zone).isEmpty())
     }
 
     @Test
     fun `next boundary picks earliest start`() {
         val routines = listOf(routine(setOf(1, 2, 3, 4, 5), 8 * 60, 9 * 60 + 30))
-        val boundary = RoutineEvaluator.nextBoundary(routines, at("2026-09-07", "07:00"))!!
+        val boundary = RoutineEvaluator.nextBoundary(routines, at("2026-09-07", "07:00"), zone)!!
         assertTrue(boundary.isStart)
         assertEquals(at("2026-09-07", "08:00"), boundary.atMillis)
     }
@@ -82,7 +82,7 @@ class RoutineEvaluatorTest {
     @Test
     fun `next boundary picks end before next start`() {
         val routines = listOf(routine(setOf(1, 2, 3, 4, 5), 8 * 60, 9 * 60 + 30))
-        val boundary = RoutineEvaluator.nextBoundary(routines, at("2026-09-07", "09:00"))!!
+        val boundary = RoutineEvaluator.nextBoundary(routines, at("2026-09-07", "09:00"), zone)!!
         assertFalse(boundary.isStart)
         assertEquals(at("2026-09-07", "09:30"), boundary.atMillis)
     }
@@ -90,7 +90,7 @@ class RoutineEvaluatorTest {
     @Test
     fun `last boundary is most recent past event`() {
         val routines = listOf(routine(setOf(1, 2, 3, 4, 5), 8 * 60, 9 * 60 + 30))
-        val boundary = RoutineEvaluator.lastBoundary(routines, at("2026-09-07", "08:30"))!!
+        val boundary = RoutineEvaluator.lastBoundary(routines, at("2026-09-07", "08:30"), zone)!!
         assertTrue(boundary.isStart)
         assertEquals(at("2026-09-07", "08:00"), boundary.atMillis)
     }
@@ -124,8 +124,8 @@ class RoutineEvaluatorTest {
 
     @Test
     fun `next midnight is start of next day`() {
-        assertEquals(at("2026-09-08", "00:00"), RoutineEvaluator.nextMidnight(at("2026-09-07", "23:59")))
-        assertEquals(at("2026-09-08", "00:00"), RoutineEvaluator.nextMidnight(at("2026-09-07", "00:00")))
+        assertEquals(at("2026-09-08", "00:00"), RoutineEvaluator.nextMidnight(at("2026-09-07", "23:59"), zone))
+        assertEquals(at("2026-09-08", "00:00"), RoutineEvaluator.nextMidnight(at("2026-09-07", "00:00"), zone))
     }
 
     @Test
