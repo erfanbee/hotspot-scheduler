@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import com.iranjan.hotspotscheduler.accessibility.AttemptLog
+import dagger.hilt.android.qualifiers.ApplicationContext
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuUserServiceArgs
 import kotlinx.coroutines.Dispatchers
