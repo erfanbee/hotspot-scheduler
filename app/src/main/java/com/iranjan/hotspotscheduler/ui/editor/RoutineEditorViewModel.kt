@@ -23,7 +23,9 @@ data class RoutineDraft(
     val endMinutes: Int = 9 * 60 + 30,
     val capText: String = "",
     val capIsGb: Boolean = true,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val mobileData: Boolean = false,
+    val hotspotPassword: String = ""
 )
 
 @HiltViewModel
@@ -53,7 +55,9 @@ class RoutineEditorViewModel @Inject constructor(
                 endMinutes = r.endMinutes,
                 capText = r.capMb?.let { formatCapText(it) } ?: "",
                 capIsGb = (r.capMb ?: 0L) >= 1024,
-                enabled = r.enabled
+                enabled = r.enabled,
+                mobileData = r.mobileData,
+                hotspotPassword = r.hotspotPassword ?: ""
             )
         }
         refreshOverlaps()
@@ -105,7 +109,9 @@ class RoutineEditorViewModel @Inject constructor(
             startMinutes = d.startMinutes,
             endMinutes = d.endMinutes,
             capMb = capMbOf(d),
-            enabled = d.enabled
+            enabled = d.enabled,
+            mobileData = d.mobileData,
+            hotspotPassword = d.hotspotPassword.trim().takeIf { it.isNotEmpty() }
         )
         repo.save(routine)
         alarmScheduler.rescheduleAll()

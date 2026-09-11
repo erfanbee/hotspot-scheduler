@@ -9,7 +9,9 @@ data class Routine(
     val startMinutes: Int,
     val endMinutes: Int,
     val capMb: Long?,
-    val enabled: Boolean
+    val enabled: Boolean,
+    val mobileData: Boolean = false,
+    val hotspotPassword: String? = null
 )
 
 fun RoutineEntity.toDomain(): Routine = Routine(
@@ -19,7 +21,9 @@ fun RoutineEntity.toDomain(): Routine = Routine(
     startMinutes = startMinutes,
     endMinutes = endMinutes,
     capMb = capMb,
-    enabled = enabled
+    enabled = enabled,
+    mobileData = mobileData,
+    hotspotPassword = hotspotPassword
 )
 
 fun Routine.toEntity(createdAt: Long): RoutineEntity = RoutineEntity(
@@ -30,5 +34,7 @@ fun Routine.toEntity(createdAt: Long): RoutineEntity = RoutineEntity(
     endMinutes = endMinutes,
     capMb = capMb,
     enabled = enabled,
+    mobileData = mobileData,
+    hotspotPassword = hotspotPassword,
     createdAt = createdAt
 )

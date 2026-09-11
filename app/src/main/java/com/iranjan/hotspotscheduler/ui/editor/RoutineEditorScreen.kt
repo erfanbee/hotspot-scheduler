@@ -118,6 +118,20 @@ fun RoutineEditorScreen(
             )
         }
 
+        OutlinedTextField(
+            value = draft.hotspotPassword,
+            onValueChange = { value -> viewModel.update { it.copy(hotspotPassword = value) } },
+            label = { Text(stringResource(R.string.editor_password)) },
+            supportingText = { Text(stringResource(R.string.editor_password_hint)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.editor_mobile_data))
+            Switch(checked = draft.mobileData, onCheckedChange = { value -> viewModel.update { it.copy(mobileData = value) } })
+        }
+
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.editor_enabled))
             Switch(checked = draft.enabled, onCheckedChange = { value -> viewModel.update { it.copy(enabled = value) } })

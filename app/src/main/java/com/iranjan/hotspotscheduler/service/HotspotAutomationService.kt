@@ -152,20 +152,37 @@ class HotspotAutomationService : LifecycleService() {
         usage: UsageSample?
     ) {
         val usageBytes = usage?.bytes ?: 0L
+        val routine = repo.routine(boundary.routineId)
         if (boundary.isStart) {
             prefs.setSuppressedUntilNextWindow(false)
             val freshCapHit = prefs.capHitEpochDay.first() == RoutineEvaluator.todayEpochDay(System.currentTimeMillis())
             if (!paused && !freshCapHit && (capMb == null || usageBytes < capMb * 1024L * 1024L)) {
-                val result = controller.setHotspotState(true)
+                val result = controller.setHotspotState(true, routine?.hotspotPassword)
                 if (result == ToggleResult.FAILED) notifications.notifyToggleFailed()
-                Log.i(TAG, "boundary START applied result=$result")
+                Log.i(TAG, "boundary START applied result=$result routine=${routine?.name}")
+                if (routine?.mobileData == true) {
+                    val md = controller.setMobileData(true)
+                    Log.i(TAG, "mobile data ON at window start result=$md")
+                }
             } else {
                 Log.i(TAG, "boundary START skipped paused=$paused capHit=$freshCapHit capMb=$capMb usage=$usageBytes")
             }
         } else {
             val result = controller.setHotspotState(false)
             if (result == ToggleResult.FAILED) notifications.notifyToggleFailed()
-            Log.i(TAG, "boundary END applied result=$result")
+            Log.i(TAG, "boundary END applied result=$result routine=${routine?.name}")
+            if (routine?.mobileData == true) {
+                val others = RoutineEvaluator.activeRoutines(
+                    repo.enabledRoutines().filter { it.id != routine.id },
+                    System.currentTimeMillis()
+                ).any { it.mobileData }
+                if (!others) {
+                    val md = controller.setMobileData(false)
+                    Log.i(TAG, "mobile data OFF at window end (no other routines need it) result=$md")
+                } else {
+                    Log.i(TAG, "mobile data kept ON: another active routine uses it")
+                }
+            }
         }
         prefs.setLastAppliedBoundary(boundary.key)
     }

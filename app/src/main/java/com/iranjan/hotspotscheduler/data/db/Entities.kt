@@ -12,6 +12,8 @@ data class RoutineEntity(
     val endMinutes: Int,
     val capMb: Long?,
     val enabled: Boolean,
+    val mobileData: Boolean = false,
+    val hotspotPassword: String? = null,
     val createdAt: Long
 )
 
