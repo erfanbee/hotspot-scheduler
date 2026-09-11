@@ -11,7 +11,6 @@ import android.os.Looper
 import com.iranjan.hotspotscheduler.accessibility.AttemptLog
 import dagger.hilt.android.qualifiers.ApplicationContext
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuUserServiceArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CountDownLatch
@@ -56,7 +55,7 @@ class ShizukuEngine @Inject constructor(@ApplicationContext private val context:
     fun isReady(): Boolean = hasPermission()
 
     private fun bindService() {
-        val args = ShizukuUserServiceArgs(ComponentName(context, ShellService::class.java))
+        val args = Shizuku.UserServiceArgs(ComponentName(context, ShellService::class.java))
             .processNameSuffix("shell")
             .version(1)
             .debuggable(false)
