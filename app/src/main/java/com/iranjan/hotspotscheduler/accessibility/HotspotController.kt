@@ -41,8 +41,9 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
         val service = AccessibilityServiceHolder.service ?: return null
         val calibration = prefs.calibration()
         return withContext(Dispatchers.Main) {
-            val match = NodeMatcher.findToggle(service.rootNode(), calibration, KEYWORD_HOTSPOT)
-                ?: return@withContext null
+            val root = service.rootNode()
+            if (root == null || root.packageName?.toString() != SETTINGS_PACKAGE) return@withContext null
+            val match = NodeMatcher.findToggle(root, calibration, KEYWORD_HOTSPOT) ?: return@withContext null
             NodeMatcher.readState(match)
         }
     }
@@ -276,13 +277,13 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
 
     private suspend fun applyPassword(password: String) {
         var editor = withContext(Dispatchers.Main) {
-            NodeMatcher.findPasswordEditor(rootNode())
+            NodeMatcher.findPasswordEditor(settingsRoot())
         }
         if (editor == null) {
             Log.i(TAG, "password field not on screen; opening hotspot config screen")
             openHotspotConfigScreen()
             editor = withContext(Dispatchers.Main) {
-                NodeMatcher.findPasswordEditor(rootNode())
+                NodeMatcher.findPasswordEditor(settingsRoot())
             }
         }
         if (editor == null) {
@@ -296,7 +297,7 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
 
     private suspend fun openHotspotConfigScreen() {
         val row = withContext(Dispatchers.Main) {
-            NodeMatcher.findClickableRow(rootNode(), KEYWORD_HOTSPOT)
+            NodeMatcher.findClickableRow(settingsRoot(), KEYWORD_HOTSPOT)
         } ?: run {
             AttemptLog.add("hotspot row not found for click-through")
             return
@@ -305,7 +306,8 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
             row.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         }
         AttemptLog.add("clicked hotspot row to open config screen")
-        awaitScreen(KEYWORD_HOTSPOT, useCalibration = false, timeoutMs = 5_000L)
+        val opened = awaitPasswordField(6_000L)
+        AttemptLog.add("config screen with password field=$opened")
     }
 
     private suspend fun findToggle(
@@ -317,8 +319,31 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
             return null
         }
         return withContext(Dispatchers.Main) {
-            NodeMatcher.findToggle(service.rootNode(), calibration, rowKeyword)
+            val root = service.rootNode()
+            when {
+                root == null -> null
+                root.packageName?.toString() != SETTINGS_PACKAGE -> {
+                    AttemptLog.add("ignoring own window; waiting for settings")
+                    null
+                }
+                else -> NodeMatcher.findToggle(root, calibration, rowKeyword)
+            }
         }
+    }
+
+    private suspend fun settingsRoot(): AccessibilityNodeInfo? = withContext(Dispatchers.Main) {
+        val root = rootNode() ?: return@withContext null
+        if (root.packageName?.toString() != SETTINGS_PACKAGE) null else root
+    }
+
+    private suspend fun awaitPasswordField(timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            val root = settingsRoot()
+            if (root != null && NodeMatcher.findPasswordEditor(root) != null) return true
+            delay(300)
+        }
+        return false
     }
 
     private suspend fun rootNode(): AccessibilityNodeInfo? =
@@ -350,10 +375,11 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
     }
 
     companion object {
+        const val SETTINGS_PACKAGE = "com.android.settings"
         private const val TAG = "HSAuto"
         private const val STATE_TIMEOUT_MS = 3_000L
         private const val SCREEN_WAIT_MS = 6_000L
-        private const val MANUAL_WAIT_MS = 60_000L
-        private const val TOTAL_TIMEOUT_MS = 75_000L
+        private const val MANUAL_WAIT_MS = 180_000L
+        private const val TOTAL_TIMEOUT_MS = 200_000L
     }
 }

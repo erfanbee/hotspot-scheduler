@@ -166,6 +166,7 @@ fun SetupScreen(
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.setup_sleep_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.setup_sleep_desc), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.setup_unlock_hint), style = MaterialTheme.typography.bodySmall)
             }
         }
 

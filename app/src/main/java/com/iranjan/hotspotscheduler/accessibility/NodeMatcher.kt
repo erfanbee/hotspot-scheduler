@@ -58,13 +58,18 @@ object NodeMatcher {
             if (own.contains("password") || own.contains("passwort") || own.contains("mot de passe")) score += 5
             val sibling = labelBefore(editor)
             if (sibling.contains("password") || sibling.contains("passwort")) score += 4
-            if (score > bestScore) {
+            if (score > bestScore && editor.isEditable) {
                 bestScore = score
                 best = editor
             }
         }
-        if (best != null && bestScore > 0 && best.isEditable) return best
-        return null
+        if (best != null && bestScore > 0) return best
+        val editable = editors.filter { it.isEditable }
+        return when (editable.size) {
+            1 -> editable[0]
+            0 -> null
+            else -> editable.last()
+        }
     }
 
     fun findClickableRow(root: AccessibilityNodeInfo?, keyword: String): AccessibilityNodeInfo? {

@@ -44,7 +44,7 @@ class UsageMonitor @Inject constructor(@ApplicationContext private val context: 
                     }
                 }
                 stats.close()
-                UsageSample(total.coerceAtLeast(0L), "tether-uids")
+                if (total > 0) UsageSample(total, "tether-uids") else null
             }
         } catch (t: Throwable) {
             null

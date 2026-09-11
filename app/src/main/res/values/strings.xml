@@ -41,6 +41,7 @@
     <string name="setup_overlay_desc">Strongly recommended. Lets the app open the hotspot Settings screen by itself in the background. Without it you will get a notification to tap each time a toggle is needed. One UI path: Settings → Apps → Hotspot Scheduler → Appear on top → Allow.</string>
     <string name="setup_sleep_title">One UI app sleeping</string>
     <string name="setup_sleep_desc">One UI path: Settings → Battery and device care → Battery → Background usage limits → Put unused apps to sleep → make sure the toggle is Off, or add Hotspot Scheduler to Never sleeping apps. This is the most common reason automation silently stops after a day or two.</string>
+    <string name="setup_unlock_hint">Phone has a PIN or fingerprint lock? Android forbids any app from unlocking it. Tip: Settings → Lock screen → Extend Unlock → Trusted places → add your home. The phone stays unlocked at home (automation works hands-free) but keeps your PIN everywhere else.</string>
     <string name="setup_open">Open</string>
     <string name="setup_granted">Granted</string>
     <string name="setup_missing">Not set</string>

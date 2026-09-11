@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.iranjan.hotspotscheduler.accessibility.AttemptLog
 import com.iranjan.hotspotscheduler.accessibility.HotspotController
+import com.iranjan.hotspotscheduler.data.repo.RoutineRepository
 import com.iranjan.hotspotscheduler.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,7 +35,8 @@ data class SetupState(
 @HiltViewModel
 class SetupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val controller: HotspotController
+    private val controller: HotspotController,
+    private val repo: RoutineRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SetupState())
@@ -58,7 +60,12 @@ class SetupViewModel @Inject constructor(
     fun testHotspot(on: Boolean) = viewModelScope.launch {
         _testRunning.value = true
         try {
-            controller.setHotspotState(on)
+            val password = repo.enabledRoutines()
+                .firstOrNull { !it.hotspotPassword.isNullOrBlank() }?.hotspotPassword
+            if (password != null) {
+                AttemptLog.add("live test: using password from an enabled routine")
+            }
+            controller.setHotspotState(on, password)
         } finally {
             _testRunning.value = false
         }
