@@ -1,4 +1,4 @@
-package com.iranjan.hotspotscheduler.ui.setup
+﻿package com.iranjan.hotspotscheduler.ui.setup
 
 import android.Manifest
 import android.app.AlarmManager
@@ -19,7 +19,7 @@ import com.iranjan.hotspotscheduler.toggle.ShizukuEngine
 import com.iranjan.hotspotscheduler.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -45,7 +45,7 @@ class SetupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val controller: HotspotController,
     private val repo: RoutineRepository,
-    private val shizuku: ShizukuEngine
+    private val shizukuEngine: ShizukuEngine
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SetupState())
@@ -80,8 +80,8 @@ class SetupViewModel @Inject constructor(
 
     private fun shizukuStatus(): ShizukuStatus = ShizukuStatus(
         installed = isShizukuInstalled(),
-        running = shizuku.isRunning(),
-        granted = shizuku.hasPermission()
+        running = shizukuEngine.isRunning(),
+        granted = shizukuEngine.hasPermission()
     )
 
     private fun isShizukuInstalled(): Boolean = try {

@@ -2,7 +2,7 @@ package com.iranjan.hotspotscheduler.toggle
 
 import android.content.pm.PackageManager
 import com.iranjan.hotspotscheduler.accessibility.AttemptLog
-import dev.rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
