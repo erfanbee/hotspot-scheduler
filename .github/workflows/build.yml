@@ -64,3 +64,15 @@ jobs:
           name: HotspotScheduler-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publish APK as release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="build-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" app/build/outputs/apk/debug/app-debug.apk \
+            --title "Build $TAG" \
+            --notes "Automated APK build" \
+            --repo "${{ github.repository }}" \
+            || gh release upload "$TAG" app/build/outputs/apk/debug/app-debug.apk --clobber --repo "${{ github.repository }}"
