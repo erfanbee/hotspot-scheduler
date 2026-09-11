@@ -151,6 +151,9 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
             launched = launchFor(rowKeyword)
             awaitScreen(rowKeyword, useCalibration, SCREEN_WAIT_MS)
             attempt(rowKeyword, targetOn, useCalibration, password)?.let { return it }
+            navigateFor(rowKeyword)
+            attempt(rowKeyword, targetOn, useCalibration, password)?.let { return it }
+            logScreenDump(rowKeyword)
             return ToggleResult.FAILED
         }
 
@@ -159,14 +162,47 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
         }
         notifications.postOpenHotspotSettingsPrompt()
         val deadline = System.currentTimeMillis() + MANUAL_WAIT_MS
+        var iterations = 0
         while (System.currentTimeMillis() < deadline) {
             if (!launched && isUnlocked() && Settings.canDrawOverlays(context)) {
                 launched = launchFor(rowKeyword)
             }
             attempt(rowKeyword, targetOn, useCalibration, password)?.let { return it }
+            iterations++
+            if (iterations % 8 == 0) {
+                navigateFor(rowKeyword)
+            }
             delay(500)
         }
+        logScreenDump(rowKeyword)
         return ToggleResult.FAILED
+    }
+
+    private suspend fun navigateFor(rowKeyword: String): Boolean {
+        val intermediates = if (rowKeyword == KEYWORD_MOBILE_DATA) {
+            listOf("data usage", "connections")
+        } else {
+            listOf("mobile hotspot and tethering", "connections")
+        }
+        for (label in intermediates) {
+            val row = withContext(Dispatchers.Main) {
+                NodeMatcher.findClickableRow(rootNode(), label)
+            } ?: continue
+            withContext(Dispatchers.Main) {
+                row.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            AttemptLog.add("clicked '$label' to navigate")
+            delay(1_800)
+            if (findToggle(rowKeyword, null) != null) return true
+        }
+        return false
+    }
+
+    private suspend fun logScreenDump(rowKeyword: String) {
+        val root = rootNode() ?: return
+        val lines = withContext(Dispatchers.Main) { NodeDumper.dumpCompact(root, 40) }
+        AttemptLog.add("screen dump for '$rowKeyword':")
+        lines.forEach { AttemptLog.add(it) }
     }
 
     private suspend fun launchFor(rowKeyword: String): Boolean {

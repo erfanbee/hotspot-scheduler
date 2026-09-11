@@ -34,6 +34,7 @@ object NodeMatcher {
         findByResourceId(root, rowKeyword)?.let { return it }
         findByClass(root, rowKeyword)?.let { return it }
         findByTextProximity(root, rowKeyword)?.let { return it }
+        findByAnyCheckable(root, rowKeyword)?.let { return it }
         return null
     }
 
@@ -185,8 +186,22 @@ object NodeMatcher {
 
     private fun bestRanked(matches: List<ToggleMatch>, rowKeyword: String): ToggleMatch? {
         if (matches.isEmpty()) return null
-        if (matches.size == 1) return matches[0]
-        return matches.maxByOrNull { rowScore(rowTextOf(it.stateNode), rowKeyword) }
+        val scored = matches.map { it to rowScore(rowTextOf(it.stateNode), rowKeyword) }
+        val best = scored.maxByOrNull { it.second } ?: return null
+        return when {
+            best.second > 0 -> best.first
+            scored.size == 1 && best.second == 0 -> best.first
+            else -> null
+        }
+    }
+
+    private fun findByAnyCheckable(root: AccessibilityNodeInfo, rowKeyword: String): ToggleMatch? {
+        val checkables = mutableListOf<AccessibilityNodeInfo>()
+        forEachNode(root) { node ->
+            if (node.isCheckable) checkables.add(node)
+        }
+        val matches = checkables.mapNotNull { wrap(it, "checkable") }
+        return bestRanked(matches, rowKeyword)
     }
 
     private fun findByTextProximity(root: AccessibilityNodeInfo, rowKeyword: String): ToggleMatch? {

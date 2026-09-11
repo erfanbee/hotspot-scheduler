@@ -8,6 +8,31 @@ object NodeDumper {
 
     private const val MAX_NODES = 1500
 
+    fun dumpCompact(root: AccessibilityNodeInfo?, maxLines: Int): List<String> {
+        if (root == null) return emptyList()
+        val result = mutableListOf<String>()
+        val queue = ArrayDeque<Pair<AccessibilityNodeInfo, Int>>()
+        queue.add(root to 0)
+        var count = 0
+        while (queue.isNotEmpty() && count < MAX_NODES && result.size < maxLines) {
+            val (node, depth) = queue.removeFirst()
+            count++
+            val cls = (node.className?.toString() ?: "?").substringAfterLast('.')
+            val id = (node.viewIdResourceName ?: "-").substringAfterLast('/')
+            val text = (node.text?.toString() ?: node.contentDescription?.toString() ?: "").take(24)
+            result.add(
+                "d$depth $cls id=$id t=\"$text\" chk=${node.isCheckable}:${node.isChecked} clk=${node.isClickable}"
+            )
+            for (i in 0 until node.childCount) {
+                try {
+                    node.getChild(i)?.let { queue.add(it to depth + 1) }
+                } catch (t: Throwable) {
+                }
+            }
+        }
+        return result
+    }
+
     fun dump(root: AccessibilityNodeInfo?): List<NodeDump> {
         if (root == null) return emptyList()
         val result = mutableListOf<NodeDump>()

@@ -5,7 +5,7 @@ import java.util.Date
 import java.util.Locale
 
 object AttemptLog {
-    private const val MAX = 50
+    private const val MAX = 150
     private val entries = ArrayDeque<String>()
     private val format = SimpleDateFormat("HH:mm:ss", Locale.US)
 

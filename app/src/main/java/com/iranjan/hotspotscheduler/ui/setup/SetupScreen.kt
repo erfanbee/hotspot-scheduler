@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
@@ -156,12 +159,18 @@ fun SetupScreen(
         }
 
         Card(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                Modifier
+                    .padding(14.dp)
+                    .heightIn(max = 340.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(stringResource(R.string.setup_diag_title), style = MaterialTheme.typography.titleMedium)
                 if (diagnostics.isEmpty()) {
                     Text(stringResource(R.string.setup_diag_empty), style = MaterialTheme.typography.bodySmall)
                 } else {
-                    diagnostics.takeLast(25).forEach { line ->
+                    diagnostics.takeLast(60).forEach { line ->
                         Text(
                             line,
                             style = MaterialTheme.typography.bodySmall,
