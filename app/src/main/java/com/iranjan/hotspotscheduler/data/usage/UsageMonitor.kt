@@ -65,7 +65,7 @@ class UsageMonitor @Inject constructor(@ApplicationContext private val context: 
     }
 
     companion object {
-        val TETHER_UIDS = setOf(0, NETWORK_STACK_UID)
         private const val NETWORK_STACK_UID = 1073
+        val TETHER_UIDS = setOf(0, NETWORK_STACK_UID)
     }
 }
