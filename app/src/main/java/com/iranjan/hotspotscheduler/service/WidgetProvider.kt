@@ -14,19 +14,27 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class WidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        val entry = EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java)
-        val repo = entry.repo()
-        runBlocking {
-            val latest = repo.latestUsage()
-            val prefsFlow = entry.prefs()
-            val hotspotOn = prefsFlow.lastKnownHotspotOn.firstOrNull()
-            updateAll(context, hotspotOn, latest?.bytes, null)
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val entry = EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java)
+                val latest = entry.repo().latestUsage()
+                val hotspotOn = entry.prefs().lastKnownHotspotOn.firstOrNull()
+                withContext(Dispatchers.Main) {
+                    updateAll(context, hotspotOn, latest?.bytes, null)
+                }
+            } finally {
+                pending.finish()
+            }
         }
     }
 

@@ -57,6 +57,8 @@
     <string name="test_data_off">Data OFF</string>
     <string name="test_running">Running — watch the screen, results appear below…</string>
     <string name="diag_share">Share diagnostics</string>
+    <string name="diag_clear">Clear</string>
+    <string name="editor_password_error">Password must be at least 8 characters, or leave empty to keep the Settings password.</string>
     <string name="shizuku_title">Background engine (Shizuku)</string>
     <string name="shizuku_desc">Strongly recommended. With Shizuku the app toggles hotspot and mobile data instantly in the background — no Settings screen, works while locked. One-time setup: 1) install Shizuku, 2) open Shizuku → follow the Wireless debugging pairing steps, 3) return here and tap Grant. Until Shizuku is ready, the app uses the accessibility engine (needs the screen on).</string>
     <string name="shizuku_status_ready">Ready</string>

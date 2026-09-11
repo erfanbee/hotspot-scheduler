@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,7 +28,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,6 +62,8 @@ fun RoutineEditorScreen(
     val labels = dayLabels()
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
+    var showPassword by remember { mutableStateOf(false) }
+    val passwordInvalid = draft.hotspotPassword.isNotEmpty() && draft.hotspotPassword.length < 8
 
     Column(
         modifier = Modifier
@@ -120,9 +129,27 @@ fun RoutineEditorScreen(
 
         OutlinedTextField(
             value = draft.hotspotPassword,
-            onValueChange = { value -> viewModel.update { it.copy(hotspotPassword = value) } },
+            onValueChange = { value -> viewModel.update { it.copy(hotspotPassword = value.filter { ch -> !ch.isWhitespace() }) } },
             label = { Text(stringResource(R.string.editor_password)) },
-            supportingText = { Text(stringResource(R.string.editor_password_hint)) },
+            supportingText = {
+                Text(
+                    stringResource(
+                        if (passwordInvalid) R.string.editor_password_error
+                        else R.string.editor_password_hint
+                    ),
+                    color = if (passwordInvalid) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { showPassword = !showPassword }) {
+                    Icon(
+                        imageVector = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = null
+                    )
+                }
+            },
+            isError = passwordInvalid,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -145,7 +172,7 @@ fun RoutineEditorScreen(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = { viewModel.save(onDone) }, modifier = Modifier.weight(1f)) {
+            Button(onClick = { viewModel.save(onDone) }, enabled = !passwordInvalid, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.save))
             }
             if (draft.id > 0) {

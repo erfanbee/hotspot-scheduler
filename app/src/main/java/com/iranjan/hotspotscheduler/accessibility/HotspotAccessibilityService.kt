@@ -4,12 +4,6 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.iranjan.hotspotscheduler.data.prefs.AutomationPrefs
-import com.iranjan.hotspotscheduler.service.NotificationHelper
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,10 +14,6 @@ import kotlinx.coroutines.withContext
 class HotspotAccessibilityService : AccessibilityService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
-    private val entryPoint: AccessibilityEntryPoint by lazy {
-        EntryPointAccessors.fromApplication(applicationContext, AccessibilityEntryPoint::class.java)
-    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -65,12 +55,4 @@ class HotspotAccessibilityService : AccessibilityService() {
         const val SETTINGS_PACKAGE = "com.android.settings"
         private const val TAG = "HSAuto"
     }
-}
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface AccessibilityEntryPoint {
-    fun controller(): HotspotController
-    fun prefs(): AutomationPrefs
-    fun notifications(): NotificationHelper
 }

@@ -6,15 +6,16 @@ class ShellService : IShellService.Stub() {
 
     override fun runCommand(command: String): String {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
-            val finished = process.waitFor(15, TimeUnit.SECONDS)
-            val stdout = process.inputStream.bufferedReader().readText()
-            val stderr = process.errorStream.bufferedReader().readText()
+            val process = ProcessBuilder("sh", "-c", command)
+                .redirectErrorStream(true)
+                .start()
+            val finished = process.waitFor(20, TimeUnit.SECONDS)
+            val output = process.inputStream.bufferedReader().readText()
             if (!finished) {
                 process.destroyForcibly()
                 "EXIT:124\noutput:timeout"
             } else {
-                "EXIT:${process.exitValue()}\n$stdout$stderr"
+                "EXIT:${process.exitValue()}\n$output"
             }
         } catch (t: Throwable) {
             "EXIT:-1\n${t.message ?: "error"}"

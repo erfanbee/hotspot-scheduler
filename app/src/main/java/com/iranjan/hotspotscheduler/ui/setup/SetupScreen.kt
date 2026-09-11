@@ -262,7 +262,19 @@ fun SetupScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(stringResource(R.string.setup_diag_title), style = MaterialTheme.typography.titleMedium)
+                Row {
+                    Text(
+                        stringResource(R.string.setup_diag_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    androidx.compose.material3.TextButton(onClick = {
+                        com.iranjan.hotspotscheduler.accessibility.AttemptLog.clear()
+                        diagnostics = emptyList()
+                    }) {
+                        Text(stringResource(R.string.diag_clear))
+                    }
+                }
                 if (diagnostics.isEmpty()) {
                     Text(stringResource(R.string.setup_diag_empty), style = MaterialTheme.typography.bodySmall)
                 } else {
