@@ -2,8 +2,6 @@ package com.iranjan.hotspotscheduler.accessibility
 
 import android.app.KeyguardManager
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
@@ -37,6 +35,7 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
 
     private val powerManager: PowerManager? = context.getSystemService(PowerManager::class.java)
     private val keyguardManager: KeyguardManager? = context.getSystemService(KeyguardManager::class.java)
+    private var keyguardLock: KeyguardManager.KeyguardLock? = null
 
     override suspend fun readHotspotState(): Boolean? {
         val service = AccessibilityServiceHolder.service ?: return null
@@ -82,7 +81,7 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
         return !km.isKeyguardLocked
     }
 
-    private fun wakeScreen() {
+    private fun wakeAndDisableKeyguard() {
         val pm = powerManager ?: return
         if (!pm.isInteractive) {
             AttemptLog.add("screen off; waking")
@@ -96,27 +95,29 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
                 AttemptLog.add("wake failed: ${t.message}")
             }
         }
+        val km = keyguardManager ?: return
+        if (km.isKeyguardLocked) {
+            val secure = try {
+                km.isKeyguardSecure
+            } catch (t: Throwable) {
+                false
+            }
+            AttemptLog.add("keyguard locked (secure=$secure); disabling non-secure lock")
+            try {
+                keyguardLock?.reenableKeyguard()
+                keyguardLock = km.newKeyguardLock("HSAuto").also { it.disableKeyguard() }
+            } catch (t: Throwable) {
+                AttemptLog.add("keyguard disable failed: ${t.message}")
+            }
+        }
     }
 
-    private fun tryDismissKeyguard(): Boolean {
-        val km = keyguardManager ?: return true
-        if (!km.isKeyguardLocked) return true
-        val secure = try {
-            km.isKeyguardSecure
+    private fun restoreKeyguard() {
+        try {
+            keyguardLock?.reenableKeyguard()
         } catch (t: Throwable) {
-            false
         }
-        AttemptLog.add("keyguard locked (secure=$secure); requesting dismiss")
-        return try {
-            km.requestDismissKeyguard(
-                object : KeyguardManager.KeyguardDismissCallback() {},
-                Handler(Looper.getMainLooper())
-            )
-            false
-        } catch (t: Throwable) {
-            AttemptLog.add("dismiss request failed: ${t.message}")
-            false
-        }
+        keyguardLock = null
     }
 
     private suspend fun runToggle(
@@ -125,11 +126,23 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
         useCalibration: Boolean,
         password: String?
     ): ToggleResult {
+        try {
+            return runToggleInner(rowKeyword, targetOn, useCalibration, password)
+        } finally {
+            restoreKeyguard()
+        }
+    }
+
+    private suspend fun runToggleInner(
+        rowKeyword: String,
+        targetOn: Boolean,
+        useCalibration: Boolean,
+        password: String?
+    ): ToggleResult {
         AttemptLog.add("=== toggle $rowKeyword target=$targetOn start")
         attempt(rowKeyword, targetOn, useCalibration, password)?.let { return it }
 
-        wakeScreen()
-        tryDismissKeyguard()
+        wakeAndDisableKeyguard()
         delay(1_500)
         attempt(rowKeyword, targetOn, useCalibration, password)?.let { return it }
 
