@@ -47,15 +47,17 @@ class SetupViewModel @Inject constructor(
         )
     }
 
-    private fun hasUsageAccess(): Boolean = try {
-        val appOps = context.getSystemService(AppOpsManager::class.java) ?: return false
-        appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(),
-            context.packageName
-        ) == AppOpsManager.MODE_ALLOWED
-    } catch (t: Throwable) {
-        false
+    private fun hasUsageAccess(): Boolean {
+        return try {
+            val appOps = context.getSystemService(AppOpsManager::class.java) ?: return false
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName
+            ) == AppOpsManager.MODE_ALLOWED
+        } catch (t: Throwable) {
+            false
+        }
     }
 
     private fun notificationGranted(): Boolean =

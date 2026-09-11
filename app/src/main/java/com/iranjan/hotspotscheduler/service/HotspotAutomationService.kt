@@ -4,7 +4,6 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import androidx.core.app.ServiceCompat
 import android.content.pm.ServiceInfo
 import com.iranjan.hotspotscheduler.accessibility.HotspotController
 import com.iranjan.hotspotscheduler.accessibility.ToggleResult
@@ -38,8 +37,7 @@ class HotspotAutomationService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        ServiceCompat.startForeground(
-            this,
+        startForeground(
             NotificationHelper.ID_STATUS,
             notifications.buildStatusNotification(initialStatus()),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC

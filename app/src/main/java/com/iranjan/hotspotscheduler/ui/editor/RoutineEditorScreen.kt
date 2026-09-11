@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.iranjan.hotspotscheduler.ui.editor
 
 import androidx.compose.foundation.layout.Arrangement
