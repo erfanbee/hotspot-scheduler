@@ -33,6 +33,7 @@ class AlarmScheduler @Inject constructor(
         if (next != null) {
             schedule(alarmManager, requestCodeFor(next), next.atMillis, ACTION_BOUNDARY, next)
         }
+        prefs.setAlarmsDirty(false)
     }
 
     suspend fun cancelAll() {

@@ -15,6 +15,7 @@ import com.iranjan.hotspotscheduler.data.usage.UsageMonitor
 import com.iranjan.hotspotscheduler.data.usage.UsageSample
 import com.iranjan.hotspotscheduler.util.AccessibilityUtils
 import com.iranjan.hotspotscheduler.util.Formatters
+import com.iranjan.hotspotscheduler.accessibility.AttemptLog
 import com.iranjan.hotspotscheduler.toggle.ShizukuEngine
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.channels.Channel
@@ -44,7 +45,12 @@ class HotspotAutomationService : LifecycleService() {
             notifications.buildStatusNotification(initialStatus()),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         )
-        lifecycleScope.launch { loop() }
+        lifecycleScope.launch {
+            // Alarms do not survive reboot/process death; force a reschedule on every
+            // service creation so boundary alarms are always re-registered.
+            prefs.setAlarmsDirty(true)
+            loop()
+        }
         Log.i(TAG, "foreground service created")
     }
 
@@ -105,13 +111,29 @@ class HotspotAutomationService : LifecycleService() {
         usage?.let { repo.upsertUsageDay(today, it.bytes) }
         repo.pruneUsage(today - KEEP_DAYS)
 
+        if (master && prefs.lastAppliedBoundary.first().isBlank()) {
+            // Fresh install / wiped prefs: adopt current state as the baseline instead of
+            // replaying a stale boundary from up to 3 days ago (which would toggle the
+            // hotspot right after install).
+            val last = RoutineEvaluator.lastBoundary(routines, now, zone)
+            if (last != null) {
+                prefs.setLastAppliedBoundary(last.key)
+                AttemptLog.add("fresh install: seeded lastAppliedBoundary=${last.key}")
+            }
+        }
+
         if (master) {
             val last = RoutineEvaluator.lastBoundary(routines, now, zone)
             val lastApplied = prefs.lastAppliedBoundary.first()
             if (last != null && lastApplied != last.key) {
                 applyBoundary(last, paused, capHit, capMb, usage)
                 alarmScheduler.rescheduleAll()
+            } else if (prefs.alarmsDirty()) {
+                // Survive reboots/process death: alarms are not persisted by the OS.
+                alarmScheduler.rescheduleAll()
             }
+        } else if (prefs.alarmsDirty()) {
+            alarmScheduler.rescheduleAll()
         }
 
         if (master && !paused && !capHit && capMb != null) {

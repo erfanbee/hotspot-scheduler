@@ -36,15 +36,17 @@ class UsageMonitor @Inject constructor(@ApplicationContext private val context: 
                 null
             } else {
                 var total = 0L
+                var sawTetherUid = false
                 val bucket = NetworkStats.Bucket()
                 while (stats.hasNextBucket()) {
                     stats.getNextBucket(bucket)
                     if (bucket.uid in TETHER_UIDS) {
                         total += bucket.rxBytes + bucket.txBytes
+                        sawTetherUid = true
                     }
                 }
                 stats.close()
-                if (total > 0) UsageSample(total, "tether-uids") else null
+                if (sawTetherUid) UsageSample(total, "tether-uids") else null
             }
         } catch (t: Throwable) {
             null
@@ -65,7 +67,8 @@ class UsageMonitor @Inject constructor(@ApplicationContext private val context: 
     }
 
     companion object {
-        private const val NETWORK_STACK_UID = 1073
-        val TETHER_UIDS = setOf(0, NETWORK_STACK_UID)
+        private const val TETHERING_UID = 1039
+        private const val NETWORK_STACK_UID = 1026
+        val TETHER_UIDS = setOf(0, NETWORK_STACK_UID, TETHERING_UID)
     }
 }

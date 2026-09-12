@@ -28,6 +28,10 @@ class AutomationPrefs @Inject constructor(private val dataStore: DataStore<Prefe
         val ACC_ALERT_MS = longPreferencesKey("last_acc_alert_ms")
         val CALIB_TYPE = stringPreferencesKey("calib_type")
         val CALIB_VALUE = stringPreferencesKey("calib_value")
+        val LAST_AP_SSID = stringPreferencesKey("last_ap_ssid")
+        val LAST_AP_PASSPHRASE = stringPreferencesKey("last_ap_passphrase")
+        val LAST_AP_SEC_OPEN = booleanPreferencesKey("last_ap_sec_open")
+        val ALARMS_DIRTY = booleanPreferencesKey("alarms_dirty")
     }
 
     val masterEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.MASTER_ENABLED] ?: true }
@@ -59,6 +63,32 @@ class AutomationPrefs @Inject constructor(private val dataStore: DataStore<Prefe
 
     suspend fun setLastAccAlertMs(value: Long) =
         dataStore.edit { it[Keys.ACC_ALERT_MS] = value }
+
+    data class ApConfig(val ssid: String?, val passphrase: String?, val open: Boolean)
+
+    suspend fun apConfig(): ApConfig {
+        val ssid = dataStore.data.map { it[Keys.LAST_AP_SSID] ?: "" }.first()
+        val storedPass = dataStore.data.map { it[Keys.LAST_AP_PASSPHRASE] ?: "" }.first()
+        val open = dataStore.data.map { it[Keys.LAST_AP_SEC_OPEN] ?: false }.first()
+        return ApConfig(
+            ssid.ifBlank { null },
+            com.iranjan.hotspotscheduler.util.PasswordCrypto.decrypt(storedPass),
+            open
+        )
+    }
+
+    suspend fun setApConfig(ssid: String?, passphrase: String?, open: Boolean) {
+        dataStore.edit {
+            it[Keys.LAST_AP_SSID] = ssid ?: ""
+            it[Keys.LAST_AP_PASSPHRASE] =
+                passphrase?.let { p -> com.iranjan.hotspotscheduler.util.PasswordCrypto.encrypt(p) } ?: ""
+            it[Keys.LAST_AP_SEC_OPEN] = open
+        }
+    }
+
+    suspend fun setAlarmsDirty(value: Boolean) = dataStore.edit { it[Keys.ALARMS_DIRTY] = value }
+
+    suspend fun alarmsDirty(): Boolean = dataStore.data.map { it[Keys.ALARMS_DIRTY] ?: true }.first()
 
     private val calibrationType: Flow<String> = dataStore.data.map { it[Keys.CALIB_TYPE] ?: "" }
     private val calibrationValue: Flow<String> = dataStore.data.map { it[Keys.CALIB_VALUE] ?: "" }

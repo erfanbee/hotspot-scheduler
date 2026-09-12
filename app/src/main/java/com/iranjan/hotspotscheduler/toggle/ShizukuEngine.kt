@@ -65,7 +65,7 @@ class ShizukuEngine @Inject constructor(@ApplicationContext private val context:
             return try {
                 val args = Shizuku.UserServiceArgs(ComponentName(context, ShellService::class.java))
                     .processNameSuffix("shell")
-                    .version(1)
+                    .version(2)
                     .debuggable(false)
                 Shizuku.bindUserService(args, connection)
                 latch.await(10, TimeUnit.SECONDS)
@@ -112,34 +112,54 @@ class ShizukuEngine @Inject constructor(@ApplicationContext private val context:
         return supported
     }
 
-    suspend fun setHotspot(on: Boolean, password: String?): Boolean {
-        return if (on) {
-            val pass = password ?: ""
-            val quoted = shellQuote(pass)
-            val candidates = if (pass.length >= 8) {
-                listOf(
-                    "cmd wifi start-softap ap0 wpa2 $quoted",
-                    "cmd wifi start-softap ap0 wpa2-psk $quoted"
-                )
+    /**
+     * Start the hotspot. Uses cached SSID/passphrase when available so the user's
+     * configured network name is preserved; the config from `cmd wifi` is session-only.
+     */
+    suspend fun setHotspot(
+        on: Boolean,
+        ssid: String?,
+        passphrase: String?,
+        openNetwork: Boolean = false
+    ): Boolean {
+        if (on) {
+            val cmd = if (openNetwork) {
+                HotspotCommands.startSoftapOpenCmd(ssid ?: HotspotCommands.DEFAULT_SSID)
             } else {
-                listOf(
-                    "cmd wifi start-softap ap0 open",
-                    "cmd wifi start-softap ap0 none"
-                )
+                val c = HotspotCommands.startSoftapCmd(ssid ?: HotspotCommands.DEFAULT_SSID, passphrase ?: "")
+                if (c == null) {
+                    AttemptLog.add("shizuku hotspot start rejected: invalid passphrase")
+                    return false
+                }
+                c
             }
-            for (cmd in candidates) {
-                val result = exec(cmd)
-                if (result.success) return true
+            val result = exec(cmd)
+            val outcome = HotspotCommands.parseStartOutcome(result.output)
+            AttemptLog.add("shizuku start-softap exit=${result.exitCode} outcome=$outcome out='${result.output.take(200)}'")
+            return when (outcome) {
+                HotspotCommands.StartOutcome.STARTED -> true
+                HotspotCommands.StartOutcome.FAILED -> false
+                HotspotCommands.StartOutcome.UNKNOWN -> {
+                    // `cmd wifi start-softap` always exits 0; when callback output is
+                    // missing, verify the actual state before believing it.
+                    hotspotState()?.on == true
+                }
             }
-            false
         } else {
-            if (exec("cmd wifi stop-softap ap0").success) {
-                true
+            val result = exec(HotspotCommands.stopSoftapCmd())
+            AttemptLog.add("shizuku stop-softap exit=${result.exitCode} out='${result.output.take(200)}'")
+            if (result.success) {
+                val state = hotspotState()
+                state?.on == false || state == null
             } else {
-                exec("cmd wifi stop-softap").success
+                false
             }
         }
     }
 
-    private fun shellQuote(value: String): String = "'" + value.replace("'", "'\\''") + "'"
+    /** Hotspot state via a grep-filtered dumpsys probe (fits the binder transaction limit). */
+    suspend fun hotspotState(): HotspotCommands.StateProbe? {
+        val result = exec(HotspotCommands.stateProbeCmd())
+        return HotspotCommands.parseStateProbe(result.output)
+    }
 }

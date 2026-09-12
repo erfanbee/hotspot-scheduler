@@ -23,8 +23,12 @@ and only windows belonging to `com.android.settings` are ever read.
 
 **Shizuku engine** — the app talks to the [Shizuku](https://shizuku.rikka.app) service (ADB-level
 privileges, no root) through a bound `UserService` and runs: `svc data enable|disable` for mobile
-data and `cmd wifi start-softap|stop-softap` (Android 13) for the hotspot, with the routine's
-password passed as an argument. Toggles are instant, silent, and work while locked.
+data and `cmd wifi start-softap <ssid> wpa2 <passphrase>` / `cmd wifi stop-softap` (Android 13)
+for the hotspot. Because the shell command's config is session-only and the saved Settings
+passphrase is not retrievable (masked in `dumpsys`), the app learns your SSID from the live
+system state, caches it (encrypted), and uses the routine's password when one is set. Toggles
+are verified against the actual hotspot state after every command and are instant, silent, and
+work while locked.
 
 **Accessibility engine** — drives the One UI Settings screens with 4 matching strategies
 (saved calibration → exact `switch_widget` id → Switch class → text-proximity), read-verify-retry

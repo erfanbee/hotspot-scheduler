@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.iranjan.hotspotscheduler.data.prefs.AutomationPrefs
 import com.iranjan.hotspotscheduler.service.NotificationHelper
+import com.iranjan.hotspotscheduler.toggle.HotspotCommands
 import com.iranjan.hotspotscheduler.toggle.ShizukuEngine
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +40,16 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
     private val keyguardManager: KeyguardManager? = context.getSystemService(KeyguardManager::class.java)
     private var keyguardLock: KeyguardManager.KeyguardLock? = null
 
-    override suspend fun readHotspotState(): Boolean? = accessibilityReadHotspotState()
+    override suspend fun readHotspotState(): Boolean? = shizukuReadState() ?: accessibilityReadHotspotState()
+
+    private suspend fun shizukuReadState(): Boolean? {
+        if (!shizuku.isReady()) return null
+        return try {
+            shizuku.hotspotState()?.on
+        } catch (t: Throwable) {
+            null
+        }
+    }
 
     private suspend fun accessibilityReadHotspotState(): Boolean? {
         val service = AccessibilityServiceHolder.service ?: return null
@@ -53,22 +63,13 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
     }
 
     override suspend fun setHotspotState(targetOn: Boolean, password: String?): ToggleResult {
-        if (shizuku.isReady()) {
-            val supported = shizuku.hotspotCommandSupported()
-            AttemptLog.add("engine=shizuku hotspot target=$targetOn commandSupported=$supported")
-            if (supported) {
-                val ok = shizuku.setHotspot(targetOn, password)
-                if (ok) {
-                    prefs.setLastKnownHotspotOn(targetOn)
-                    AttemptLog.add("HOTSPOT target=$targetOn -> TOGGLED (shizuku, background)")
-                    return ToggleResult.TOGGLED
-                }
-                AttemptLog.add("shizuku hotspot failed; falling back to accessibility")
-            } else {
-                AttemptLog.add("shizuku start-softap not supported; falling back to accessibility")
-            }
+        if (shizuku.isReady() && shizuku.hotspotCommandSupported()) {
+            AttemptLog.add("engine=shizuku hotspot target=$targetOn")
+            val result = shizukuToggleHotspot(targetOn, password)
+            if (result != null) return result
+            AttemptLog.add("shizuku hotspot failed; falling back to accessibility")
         } else {
-            AttemptLog.add("engine=accessibility (shizuku not ready)")
+            AttemptLog.add("engine=accessibility (shizuku not ready or command unsupported)")
         }
         val result = withTimeoutOrNull(TOTAL_TIMEOUT_MS) {
             runToggle(KEYWORD_HOTSPOT, targetOn, useCalibration = true, password = password)
@@ -82,11 +83,118 @@ class AccessibilityHotspotControllerImpl @Inject constructor(
         return result
     }
 
+    /**
+     * Shizuku path. The `cmd wifi start-softap` config is session-only and cannot reuse
+     * the saved Settings config (dumpsys masks the passphrase), so:
+     *  - learn & cache SSID/security from the live dumpsys state;
+     *  - use the routine password (validated >=8 chars) or the cached passphrase;
+     *  - verify the resulting state after every command.
+     * Returns null when Shizuku failed and the caller should fall back to accessibility.
+     */
+    private suspend fun shizukuToggleHotspot(targetOn: Boolean, password: String?): ToggleResult? {
+        val state = try { shizuku.hotspotState() } catch (t: Throwable) { null }
+        if (state != null) {
+            if (state.on == targetOn) {
+                AttemptLog.add("shizuku: hotspot already ${if (targetOn) "on" else "off"}")
+                prefs.setLastKnownHotspotOn(targetOn)
+                return ToggleResult.ALREADY_OK
+            }
+        }
+
+        if (!targetOn) {
+            val ok = shizuku.setHotspot(false, null, null)
+            val verified = verifyState(expectedOn = false)
+            return if (ok || verified == false) {
+                prefs.setLastKnownHotspotOn(false)
+                ToggleResult.TOGGLED
+            } else {
+                AttemptLog.add("shizuku stop-softap did not take effect")
+                null
+            }
+        }
+
+        // Learn & cache SSID/security from the live dump whenever available.
+        if (state?.ssid != null) {
+            prefs.setApConfig(state.ssid, null, state.open == true)
+        }
+        val cached = prefs.apConfig()
+        val ssid = state?.ssid ?: cached.ssid ?: HotspotCommands.DEFAULT_SSID
+        val knownOpen = state?.open ?: if (cached.ssid != null) cached.open else false
+
+        if (knownOpen) {
+            // The user's hotspot is an open network; start it the same way.
+            val started = shizuku.setHotspot(true, ssid, null, openNetwork = true)
+            val verified = verifyState(expectedOn = true)
+            return if (started || verified == true) {
+                prefs.setLastKnownHotspotOn(true)
+                ToggleResult.TOGGLED
+            } else {
+                AttemptLog.add("shizuku open-network start did not take effect")
+                null
+            }
+        }
+
+        val candidatePassphrases = buildList {
+            if (password != null && HotspotCommands.validPassphrase(password)) add(password)
+            cached.passphrase?.takeIf { HotspotCommands.validPassphrase(it) }?.let { add(it) }
+        }
+        if (candidatePassphrases.isEmpty()) {
+            AttemptLog.add("shizuku: no valid passphrase available; cannot start secured hotspot")
+            return null
+        }
+
+        var lastStarted = false
+        var startedPass: String? = null
+        for (pass in candidatePassphrases) {
+            val started = shizuku.setHotspot(true, ssid, pass)
+            if (started) {
+                lastStarted = true
+                startedPass = pass
+                break
+            }
+        }
+        val verified = verifyState(expectedOn = true)
+        return when {
+            lastStarted || verified == true -> {
+                prefs.setApConfig(ssid, startedPass ?: candidatePassphrases.firstOrNull(), false)
+                prefs.setLastKnownHotspotOn(true)
+                ToggleResult.TOGGLED
+            }
+            else -> {
+                AttemptLog.add("shizuku start-softap did not take effect")
+                null
+            }
+        }
+    }
+
+    private suspend fun verifyState(expectedOn: Boolean): Boolean? {
+        var result: Boolean? = null
+        var attempts = 0
+        while (attempts < 5) {
+            delay(600)
+            val probe = try { shizuku.hotspotState() } catch (t: Throwable) { null }
+            if (probe != null) {
+                result = probe.on
+                if (probe.on == expectedOn) return probe.on
+            }
+            attempts++
+        }
+        return result
+    }
+
     override suspend fun setMobileData(targetOn: Boolean): ToggleResult {
         if (shizuku.isReady()) {
+            val state = shizuku.mobileDataState()
+            if (state == targetOn) {
+                AttemptLog.add("MOBILE DATA target=$targetOn -> ALREADY_OK (shizuku)")
+                return ToggleResult.ALREADY_OK
+            }
             val ok = shizuku.mobileData(targetOn)
-            AttemptLog.add("MOBILE DATA target=$targetOn -> ${if (ok) "TOGGLED" else "FAILED"} (shizuku)")
-            if (ok) return ToggleResult.TOGGLED
+            val after = shizuku.mobileDataState()
+            if (ok && (after == null || after == targetOn)) {
+                AttemptLog.add("MOBILE DATA target=$targetOn -> TOGGLED (shizuku)")
+                return ToggleResult.TOGGLED
+            }
             AttemptLog.add("shizuku mobile data failed; falling back to accessibility")
         } else {
             AttemptLog.add("engine=accessibility (shizuku not ready)")
