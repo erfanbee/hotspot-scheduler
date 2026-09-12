@@ -148,12 +148,9 @@ class ShizukuEngine @Inject constructor(@ApplicationContext private val context:
         } else {
             val result = exec(HotspotCommands.stopSoftapCmd())
             AttemptLog.add("shizuku stop-softap exit=${result.exitCode} out='${result.output.take(200)}'")
-            if (result.success) {
-                val state = hotspotState()
-                state?.on == false || state == null
-            } else {
-                false
-            }
+            if (!result.success) return false
+            val state = hotspotState()
+            return state?.on == false || state == null
         }
     }
 
