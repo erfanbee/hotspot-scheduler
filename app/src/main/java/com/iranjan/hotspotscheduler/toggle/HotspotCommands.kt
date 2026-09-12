@@ -95,7 +95,7 @@ object HotspotCommands {
                     ssidRegex.find(line)?.let { blockSsid = it.groupValues[1] }
                 line.startsWith("Passphrase =") ->
                     blockOpen = line.contains("<empty>")
-                line.startsWith("SecurityType:") && blockOpen == null ->
+                line.startsWith("SecurityType") && blockOpen == null ->
                     blockOpen = line.endsWith("1")
             }
         }
