@@ -1,0 +1,98 @@
+
+Welcome to Gradle 8.1.1!
+
+Here are the highlights of this release:
+ - Stable configuration cache
+ - Experimental Kotlin DSL assignment syntax
+ - Building with Java 20
+
+For more details see https://docs.gradle.org/8.1.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. See https://docs.gradle.org/8.1.1/userguide/gradle_daemon.html#sec:disabling_the_daemon.
+Daemon will be stopped at the end of the build 
+Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/licenses
+License for package Android SDK Build-Tools 33.0.1 accepted.
+Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
+Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:compileDebugAidl
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:javaPreCompileDebug
+> Task :app:processDebugManifestForPackage
+> Task :app:processDebugResources
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:41:47 'KeyguardLock' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:228:34 'SCREEN_BRIGHT_WAKE_LOCK: Int' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:228:74 'ACQUIRE_CAUSES_WAKEUP: Int' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:245:31 'reenableKeyguard(): Unit' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:246:35 'newKeyguardLock(String!): KeyguardManager.KeyguardLock!' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:246:71 'disableKeyguard(): Unit' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:255:27 'reenableKeyguard(): Unit' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/accessibility/HotspotController.kt:289:13 The value 'launchFor(rowKeyword)' assigned to 'var launched: Boolean defined in com.iranjan.hotspotscheduler.accessibility.AccessibilityHotspotControllerImpl.runToggleInner' is never used
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/core/RoutineEvaluator.kt:61:66 Unnecessary non-null assertion (!!) on a non-null receiver of type RoutineEvaluator.Boundary
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/core/RoutineEvaluator.kt:65:66 Unnecessary non-null assertion (!!) on a non-null receiver of type RoutineEvaluator.Boundary
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/core/RoutineEvaluator.kt:84:66 Unnecessary non-null assertion (!!) on a non-null receiver of type RoutineEvaluator.Boundary
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/core/RoutineEvaluator.kt:88:66 Unnecessary non-null assertion (!!) on a non-null receiver of type RoutineEvaluator.Boundary
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/data/usage/UsageMonitor.kt:34:63 'TYPE_MOBILE: Int' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/data/usage/UsageMonitor.kt:58:73 'TYPE_MOBILE: Int' is deprecated. Deprecated in Java
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/service/HotspotAutomationService.kt:175:9 Parameter 'capHit' is never used
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/ui/setup/SetupViewModel.kt:61:56 Parameter 'grantResult' is never used, could be renamed to _
+w: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/src/main/java/com/iranjan/hotspotscheduler/ui/setup/SetupViewModel.kt:140:20 'checkOpNoThrow(String, Int, String): Int' is deprecated. Deprecated in Java
+
+> Task :app:compileDebugJavaWithJavac
+> Task :app:hiltAggregateDepsDebug
+> Task :app:hiltJavaCompileDebug
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:transformDebugClassesWithAsm
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:hiltAggregateDepsDebugUnitTest
+> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:transformDebugUnitTestClassesWithAsm
+
+> Task :app:testDebugUnitTest
+
+com.iranjan.hotspotscheduler.toggle.HotspotCommandsTest > security type 1 alone means open when passphrase line missing FAILED
+    java.lang.AssertionError at HotspotCommandsTest.kt:200
+
+37 tests completed, 1 failed
+
+> Task :app:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/hotspot-scheduler/hotspot-scheduler/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 2m 1s
+30 actionable tasks: 30 executed
